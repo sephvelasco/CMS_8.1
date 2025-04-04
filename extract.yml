@@ -1,0 +1,29 @@
+---
+- name: Extract Executable from PCAP in Control Node
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Prerequisites
+      apt:
+        name: tshark
+        state: latest
+
+    - name: Extract Executable from PCAP
+      command: >
+        tshark -r /home/velasco1/nimda.download.pcap
+        --export-object "http,/home/velasco"
+      args:
+        chdir: /home/velasco1
+      register: tshark_output
+
+    - name: Verify Extraction
+      stat:
+        path: /home/velasco
+      register: extraction_status
+
+    - name: Insert Executable to Managed Node
+      fetch:
+        src: /home/velasco/W32.Nimda.Amm.exe
+        dest: /home/velasco/CMS_8.1/
+        flat: yes
+      when: extraction_status.stat.exists
